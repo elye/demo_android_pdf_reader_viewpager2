@@ -29,7 +29,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         TabLayoutMediator(pdf_page_tab, pdf_view_pager) { tab, position ->
-            tab.text = position.toString()
+            tab.text = (position + 1).toString()
         }.attach()
     }
 
