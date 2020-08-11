@@ -15,7 +15,7 @@ class MainActivity : AppCompatActivity() {
     private val pdfReader by lazy {
         val file = File(cacheDir, fileName)
         file.outputStream().use { fileOut ->
-            assets.open(MainActivity.fileName).copyTo(fileOut)
+            assets.open(fileName).copyTo(fileOut)
         }
         PdfReader(file)
     }

@@ -9,7 +9,8 @@ import java.io.File
 class PdfReader(file: File) {
 
     private var currentPage: PdfRenderer.Page? = null
-    private val fileDescriptor = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
+    private val fileDescriptor =
+        ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
     private val pdfRenderer = PdfRenderer(fileDescriptor)
 
     val pageCount = pdfRenderer.pageCount
