@@ -50,7 +50,6 @@ class MainActivity : AppCompatActivity() {
             "https://www.entnet.org/sites/default/files/uploads/PracticeManagement/Resources/_files/instructions-for-adding-your-logo.pdf"
         ) { file ->
             file ?: return@downloadPdf
-
             runOnUiThread {
                 (pdf_view_pager.adapter as PageAdaptor).setupPdfRenderer(PdfReader(file))
             }
@@ -76,11 +75,7 @@ class MainActivity : AppCompatActivity() {
         client.newCall(request).enqueue(object : Callback {
 
             override fun onResponse(call: Call, response: Response) {
-                println("successful download")
-
-                val pdfData = response.body?.byteStream()
-
-                pdfData?.apply {
+                response.body?.byteStream()?.apply {
                     val file = File(cacheDir, fileName)
                     file.outputStream().use { fileOut ->
                         copyTo(fileOut)
@@ -90,7 +85,6 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onFailure(call: Call, e: IOException) {
-                Log.d("Error", e.message)
                 completion(null)
             }
         })
