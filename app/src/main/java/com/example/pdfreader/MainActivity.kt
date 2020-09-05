@@ -23,6 +23,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private var disposable = Disposables.disposed()
+    private var pdfReader: PdfReader? = null
 
     private val fileDownloader by lazy {
         FileDownloader(
@@ -53,7 +54,7 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, it.localizedMessage, Toast.LENGTH_SHORT).show()
             }, {
                 Toast.makeText(this, "Complete Downloaded", Toast.LENGTH_SHORT).show()
-                PdfReader(targetFile).apply {
+                pdfReader = PdfReader(targetFile).apply {
                     (pdf_view_pager.adapter as PageAdaptor).setupPdfRenderer(this)
                 }
             })
@@ -66,5 +67,6 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         disposable.dispose()
+        pdfReader?.close()
     }
 }
