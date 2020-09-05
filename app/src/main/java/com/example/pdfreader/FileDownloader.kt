@@ -32,9 +32,18 @@ class FileDownloader(okHttpClient: OkHttpClient) {
             if (responseCode >= HttpURLConnection.HTTP_OK &&
                 responseCode < HttpURLConnection.HTTP_MULT_CHOICE &&
                 body != null) {
+                val length = body.contentLength()
                 body.byteStream().apply {
                     file.outputStream().use { fileOut ->
-                        copyTo(fileOut, BUFFER_LENGTH_BYTES)
+                        var bytesCopied = 0
+                        val buffer = ByteArray(BUFFER_LENGTH_BYTES)
+                        var bytes = read(buffer)
+                        while (bytes >= 0) {
+                            fileOut.write(buffer, 0, bytes)
+                            bytesCopied += bytes
+                            bytes = read(buffer)
+                            emitter.onNext(((bytesCopied * 100)/length).toInt())
+                        }
                     }
                     emitter.onComplete()
                 }
