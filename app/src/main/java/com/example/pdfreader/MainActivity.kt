@@ -39,39 +39,22 @@ class MainActivity : AppCompatActivity() {
             getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         )
     }
-    private var dispoable = Disposables.disposed()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+
         pdf_view_pager.adapter = PageAdaptor()
+        downloadPdf(
+            "https://www.entnet.org/sites/default/files/uploads/PracticeManagement/Resources/_files/instructions-for-adding-your-logo.pdf"
+        ) { file ->
+            file ?: return@downloadPdf
 
-        val targetFile = File(cacheDir, CACHE_FILE_NAME)
-        dispoable = fileDownloader.download(
-            "https://www.entnet.org/sites/default/files/uploads/PracticeManagement/Resources/_files/instructions-for-adding-your-logo.pdf", targetFile)
-            .throttleFirst(1, TimeUnit.SECONDS)
-            .toFlowable(BackpressureStrategy.LATEST)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({  }, {  },
-                {
-                    PdfReader(targetFile).apply {
-                        (pdf_view_pager.adapter as PageAdaptor).setupPdfRenderer(this)
-                    }
-                })
-
-//        downloadPdf(this, "https://www.entnet.org/sites/default/files/uploads/PracticeManagement/Resources/_files/instructions-for-adding-your-logo.pdf") {
-//            _, inputStream ->
-//            inputStream?.let{
-//                val file = File(cacheDir, fileName)
-//                file.outputStream().use { fileOut ->
-//                    inputStream.copyTo(fileOut)
-//                }
-//
-//                (pdf_view_pager.adapter as PageAdaptor).setupPdfRenderer(PdfReader(file))
-//            }
-//        }
+            runOnUiThread {
+                (pdf_view_pager.adapter as PageAdaptor).setupPdfRenderer(PdfReader(file))
+            }
+        }
 
         TabLayoutMediator(pdf_page_tab, pdf_view_pager) { tab, position ->
             tab.text = (position + 1).toString()
@@ -83,42 +66,32 @@ class MainActivity : AppCompatActivity() {
         pdfReader.close()
     }
 
-    fun downloadPdf(context: Context, pdfUrl: String, completion: (Boolean, InputStream?) -> Unit) {
-
+    private fun downloadPdf(pdfUrl: String, completion: (File?) -> Unit) {
         val request = Request.Builder()
             .url(pdfUrl)
             .build()
         val client = OkHttpClient.Builder()
             .build()
 
-        client.newCall(request).enqueue(object: Callback {
+        client.newCall(request).enqueue(object : Callback {
 
             override fun onResponse(call: Call, response: Response) {
                 println("successful download")
 
                 val pdfData = response.body?.byteStream()
 
-                //At this point you can do something with the pdf data
-                //Below I add it to internal storage
-
-                if (pdfData != null) {
-
-                    try {
-                        context.openFileOutput("myFile.pdf", Context.MODE_PRIVATE).use { output ->
-                            output.write(pdfData.readBytes())
-                        }
-
-                    } catch (e: IOException) {
-                        e.printStackTrace()
+                pdfData?.apply {
+                    val file = File(cacheDir, fileName)
+                    file.outputStream().use { fileOut ->
+                        copyTo(fileOut)
                     }
-                }
-                completion(true, pdfData)
+                    completion(file)
+                } ?: completion(null)
             }
 
             override fun onFailure(call: Call, e: IOException) {
-
-                Log.d("Elisha", e.message)
-                completion(true, null)
+                Log.d("Error", e.message)
+                completion(null)
             }
         })
     }
